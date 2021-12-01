@@ -1,9 +1,9 @@
-pub const off: usize = 1;
+pub const OFF: usize = 1;
 
 // ifill fills an integer array with a given value.
 pub fn ifill(a: &mut [usize], la: usize, ival: usize) {
     for i in 1..=la {
-        a[i - off] = ival;
+        a[i - OFF] = ival;
     }
 }
 
@@ -11,7 +11,7 @@ pub fn dordstat(
     rnd: &mut usize,
     n: usize,
     k: usize,
-    A: &mut [f64],
+    a: &mut [f64],
     kth: &mut f64,
     info: &mut isize,
 ) {
@@ -19,7 +19,9 @@ pub fn dordstat(
     let mut j: usize;
     let mut x: f64;
 
-    if k < 0 || k > n {
+    if
+    /*k < 0 ||*/
+    k > n {
         *info = -1;
         return;
     }
@@ -36,30 +38,30 @@ pub fn dordstat(
             *rnd = (1366 * *rnd + 150889) % 714025;
             let q = p + (*rnd % (r - p + 1));
 
-            let tmp = A[p - off];
-            A[p - off] = A[q - off];
-            A[q - off] = tmp;
+            let tmp = a[p - OFF];
+            a[p - OFF] = a[q - OFF];
+            a[q - OFF] = tmp;
         }
 
-        x = A[p - off];
+        x = a[p - OFF];
         i = p - 1;
         j = r + 1;
 
         loop {
             j = j - 1;
-            while A[j - off] > x {
+            while a[j - OFF] > x {
                 j = j - 1;
             }
 
             i = i + 1;
-            while A[i - off] < x {
+            while a[i - OFF] < x {
                 i = i + 1;
             }
 
             if i < j {
-                let tmp = A[i - off];
-                A[i - off] = A[j - off];
-                A[j - off] = tmp;
+                let tmp = a[i - OFF];
+                a[i - OFF] = a[j - OFF];
+                a[j - OFF] = tmp;
                 continue;
             }
 
@@ -72,6 +74,6 @@ pub fn dordstat(
         }
     }
 
-    *kth = A[p - off];
+    *kth = a[p - OFF];
     *info = 0;
 }

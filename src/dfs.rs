@@ -1,4 +1,4 @@
-use crate::internal::off;
+use crate::internal::OFF;
 
 pub fn ludfs(
     jcol: usize,
@@ -22,8 +22,8 @@ pub fn ludfs(
     // For each krow such that A(krow,jcol) is nonzero do...
 
     // Range of indices in arow for column jcol of A.
-    let nzast = acolst[cperm[jcol - off] - off];
-    let nzaend = acolst[cperm[jcol - off]]; //+1-off]
+    let nzast = acolst[cperm[jcol - OFF] - OFF];
+    let nzaend = acolst[cperm[jcol - OFF]]; //+1-off]
 
     if nzaend < nzast {
         return Err(format!(
@@ -47,7 +47,7 @@ pub fn ludfs(
         }
         parent[krow as usize] = 0;
         found[krow as usize] = jcol;
-        let mut chdptr = lcolst[rperm[krow as usize] - off]; // Index of current child of current vertex.
+        let mut chdptr = lcolst[rperm[krow as usize] - OFF]; // Index of current child of current vertex.
 
         // The main depth-first search loop starts here.
         // repeat
@@ -62,7 +62,7 @@ pub fn ludfs(
             'l200: loop {
                 if chdptr < chdend {
                     // Possible next vertex in depth-first search (zero based).
-                    let nextk: isize = lurow[chdptr - off] - 1;
+                    let nextk: isize = lurow[chdptr - OFF] - 1;
                     chdptr = chdptr + 1;
                     if rperm[nextk as usize] == 0 {
                         continue 'l200;
@@ -77,7 +77,7 @@ pub fn ludfs(
                     parent[nextk as usize] = krow as usize + 1;
                     krow = nextk;
                     found[krow as usize] = jcol;
-                    chdptr = lcolst[rperm[krow as usize] - off];
+                    chdptr = lcolst[rperm[krow as usize] - OFF];
                     //goto l100
                     continue 'l100;
                 }
@@ -87,7 +87,7 @@ pub fn ludfs(
 
             // Allocate space for U(rperm(k),jcol) = PtU(krow,jcol) in the sparse data structure.
             *lastlu = *lastlu + 1;
-            lurow[*lastlu - off] = krow + 1;
+            lurow[*lastlu - OFF] = krow + 1;
             krow = parent[krow as usize] as isize - 1;
             if krow >= 0 {
                 chdptr = child[krow as usize];
@@ -103,13 +103,13 @@ pub fn ludfs(
     // The diagonal element goes in L, not U, until we do the column
     // division at the end of the major step.
 
-    lcolst[jcol - off] = *lastlu + 1;
+    lcolst[jcol - OFF] = *lastlu + 1;
     for nzaptr in nzast - 1..nzaend {
         let krow = arow[nzaptr];
-        if rperm[krow - off] == 0 {
-            found[krow - off] = jcol;
+        if rperm[krow - OFF] == 0 {
+            found[krow - OFF] = jcol;
             *lastlu += 1;
-            lurow[*lastlu - off] = krow as isize;
+            lurow[*lastlu - OFF] = krow as isize;
         }
     }
 

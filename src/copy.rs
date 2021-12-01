@@ -1,4 +1,4 @@
-use crate::internal::{dordstat, off};
+use crate::internal::{dordstat, OFF};
 
 use crate::rlu::PivotPolicy;
 
@@ -8,7 +8,7 @@ pub fn lucopy(
     dthresh: f64,
     nzcount: usize,
     jcol1: usize,
-    ncol: usize,
+    _ncol: usize,
     lastlu: &mut usize,
     lu: &mut [f64],
     lurow: &mut [isize],
@@ -89,8 +89,8 @@ pub fn lucopy(
             return Ok(zpivot);
         }
     } else {
-        let mut udthreshabs: f64;
-        let mut ldthreshabs: f64;
+        let udthreshabs: f64;
+        let ldthreshabs: f64;
         let mut rnd: usize = 0;
 
         // Partial and threshold pivoting.
@@ -104,7 +104,7 @@ pub fn lucopy(
             let mut maxpivglb = -1.0;
             for nzptr in ucolst[jcol] - 1..lcolst[jcol] - 1 {
                 let irow = lurow[nzptr] as usize;
-                let utemp = dense[irow - off].abs();
+                let utemp = dense[irow - OFF].abs();
                 if utemp > maxpivglb {
                     maxpivglb = utemp;
                 }
@@ -114,7 +114,7 @@ pub fn lucopy(
             maxpivglb = -1.0;
             for nzptr in lcolst[jcol] - 1..ucolst[jcol + 1] - 1 {
                 let irow = lurow[nzptr] as usize;
-                let utemp = dense[irow - off].abs();
+                let utemp = dense[irow - OFF].abs();
                 if utemp > maxpivglb {
                     maxpivglb = utemp;
                 }
@@ -124,7 +124,7 @@ pub fn lucopy(
             let mut i: usize = 0;
             for nzptr in ucolst[jcol] - 1..lcolst[jcol] - 1 {
                 let irow = lurow[nzptr] as usize;
-                twork[i] = dense[irow - off].abs();
+                twork[i] = dense[irow - OFF].abs();
                 i += 1;
             }
             if nzcount < i {
@@ -139,7 +139,7 @@ pub fn lucopy(
             let mut i: usize = 0;
             for nzptr in lcolst[jcol] - 1..ucolst[jcol + 1] - 1 {
                 let irow = lurow[nzptr] as usize;
-                twork[i] = dense[irow - off].abs();
+                twork[i] = dense[irow - OFF].abs();
                 i += 1;
             }
             if nzcount < i {
@@ -280,8 +280,8 @@ pub fn lucopy(
         ));
     }
 
-    let pivrow = lurow[ujjptr - off];
-    let ujj = lu[ujjptr - off];
+    let pivrow = lurow[ujjptr - OFF];
+    let ujj = lu[ujjptr - OFF];
 
     if ujj == 0.0 {
         return Err(format!(
@@ -290,15 +290,15 @@ pub fn lucopy(
         ));
     }
     let dptr = lcolst[jcol];
-    lurow[ujjptr - off] = lurow[dptr - off];
-    lu[ujjptr - off] = lu[dptr - off];
-    lurow[dptr - off] = pivrow;
-    lu[dptr - off] = ujj;
+    lurow[ujjptr - OFF] = lurow[dptr - OFF];
+    lu[ujjptr - OFF] = lu[dptr - OFF];
+    lurow[dptr - OFF] = pivrow;
+    lu[dptr - OFF] = ujj;
     lcolst[jcol] = dptr + 1;
 
     // Record the pivot in P.
 
-    rperm[pivrow as usize - off] = jcol1;
+    rperm[pivrow as usize - OFF] = jcol1;
     //if pivrow == 38 {
     //	print("exchanging", jcol, pivrow)
     //}
@@ -312,7 +312,7 @@ pub fn lucopy(
         return Ok(zpivot);
     }
     for nzptr in nzst..=nzend {
-        lu[nzptr - off] = lu[nzptr - off] / ujj;
+        lu[nzptr - OFF] = lu[nzptr - OFF] / ujj;
     }
 
     let zpivot = pivrow;

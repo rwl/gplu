@@ -37,7 +37,7 @@ fn main() {
     let col_perm = vec![6, 5, 2, 4, 1, 9, 7, 8, 0, 3];
 
     let mut opts = Options::new();
-    opts.colPerm = Some(col_perm);
+    opts.col_perm = Some(col_perm);
 
     let lu = factor(n, &arow, &acolst, &a, &opts).unwrap();
 

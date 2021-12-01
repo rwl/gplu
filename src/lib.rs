@@ -13,21 +13,20 @@ use internal::ifill;
 use maxmatch::maxmatch;
 use rlu::*;
 use solve::*;
-use std::cmp::min;
 
 /// LU is a lower-upper numeric factorization.
 #[derive(Debug)]
 pub struct LU {
-    luSize: usize,
-    luNZ: Vec<f64>,
-    luRowInd: Vec<isize>,
-    lColPtr: Vec<usize>,
-    uColPtr: Vec<usize>,
+    lu_size: usize,
+    lu_nz: Vec<f64>,
+    lu_row_ind: Vec<isize>,
+    l_col_ptr: Vec<usize>,
+    u_col_ptr: Vec<usize>,
 
-    rowPerm: Vec<usize>,
-    colPerm: Vec<usize>,
+    row_perm: Vec<usize>,
+    col_perm: Vec<usize>,
 
-    nA: usize,
+    n: usize,
 }
 
 /// Factor performs sparse LU factorization with partial pivoting.
@@ -38,45 +37,45 @@ pub struct LU {
 /// are returned.  This subroutine uses the Coleman-Gilbert-Peierls
 /// algorithm, in which total time is O(nonzero multiplications).
 pub fn factor(
-    nA: usize,
-    rowind: &[usize],
-    colptr: &[usize],
-    nzA: &[f64],
+    n: usize,
+    rowind0: &[usize],
+    colptr0: &[usize],
+    nz: &[f64],
     opts: &Options,
 ) -> Result<LU, String> {
-    let nrow = nA;
-    let ncol = nA;
-    let nnzA = nzA.len();
+    let nrow = n;
+    let ncol = n;
+    let nnz = nz.len();
 
-    if nnzA > nA * nA {
-        return Err(format!("nnz ({}) must be < n*n ({})", nnzA, nA * nA));
+    if nnz > n * n {
+        return Err(format!("nnz ({}) must be < n*n ({})", nnz, n * n));
     }
-    if rowind.len() != nzA.len() {
+    if rowind0.len() != nz.len() {
         return Err(format!(
             "len rowind ({}) must be nnz ({})",
-            rowind.len(),
-            nzA.len()
+            rowind0.len(),
+            nz.len()
         ));
     }
-    if colptr.len() != ncol + 1 {
+    if colptr0.len() != ncol + 1 {
         return Err(format!(
             "len colptr ({}) must be ncol+1 ({})",
-            colptr.len(),
+            colptr0.len(),
             ncol + 1
         ));
     }
 
-    match &opts.colPerm {
-        Some(colPerm) => {
+    match &opts.col_perm {
+        Some(col_perm) => {
             // If a column permutation is specified, it must be a length ncol permutation.
-            if colPerm.len() != ncol {
+            if col_perm.len() != ncol {
                 return Err(format!(
                     "column permutation ({}) must be a length ncol {}",
-                    colPerm.len(),
+                    col_perm.len(),
                     ncol
                 ));
             }
-            for v in colPerm.iter() {
+            for v in col_perm.iter() {
                 if v < &0 || v >= &ncol {
                     return Err(format!(
                         "column permutation {} out of range [0,{})",
@@ -89,13 +88,13 @@ pub fn factor(
     }
 
     // Convert the descriptor to 1-base if necessary.
-    let mut colptrA = vec![0; nA + 1];
-    let mut rowindA = vec![0; nnzA];
-    for jcol in 0..nA + 1 {
-        colptrA[jcol] = colptr[jcol] + 1;
+    let mut colptr = vec![0; n + 1];
+    let mut rowind = vec![0; nnz];
+    for jcol in 0..n + 1 {
+        colptr[jcol] = colptr0[jcol] + 1;
     }
-    for jcol in 0..nnzA {
-        rowindA[jcol] = rowind[jcol] + 1;
+    for jcol in 0..nnz {
+        rowind[jcol] = rowind0[jcol] + 1;
     }
 
     // Allocate work arrays.
@@ -107,28 +106,28 @@ pub fn factor(
     let mut pattern = vec![0; nrow];
 
     // Create lu structure.
-    let luSize = ((nnzA as f64) * opts.fillRatio) as usize;
+    let lu_size = ((nnz as f64) * opts.fill_ratio) as usize;
     let mut lu = LU {
-        luSize,
-        luNZ: vec![0.0; luSize],
-        luRowInd: vec![0; luSize],
-        uColPtr: vec![0; ncol + 1],
-        lColPtr: vec![0; ncol],
-        rowPerm: vec![0; nrow],
-        colPerm: vec![0; ncol],
-        nA,
+        lu_size: lu_size,
+        lu_nz: vec![0.0; lu_size],
+        lu_row_ind: vec![0; lu_size],
+        u_col_ptr: vec![0; ncol + 1],
+        l_col_ptr: vec![0; ncol],
+        row_perm: vec![0; nrow],
+        col_perm: vec![0; ncol],
+        n: n,
     };
 
     let (mut rmatch, mut cmatch) = maxmatch(
         nrow,
         ncol,
-        &colptrA,
-        &rowindA,
-        &mut lu.lColPtr,
-        &mut lu.uColPtr,
-        &mut lu.rowPerm,
-        &mut lu.colPerm,
-        &mut lu.luRowInd,
+        &colptr,
+        &rowind,
+        &mut lu.l_col_ptr,
+        &mut lu.u_col_ptr,
+        &mut lu.row_perm,
+        &mut lu.col_perm,
+        &mut lu.lu_row_ind,
     )?;
 
     for jcol in 0..ncol {
@@ -142,24 +141,24 @@ pub fn factor(
     // If we are threshold pivoting, get row counts.
     let mut lastlu = 0;
 
-    let mut localPivotPolicy = &opts.pivotPolicy;
+    let mut local_pivot_policy = &opts.pivot_policy;
     //let lasta = colptrA[ncol] - 1;
-    lu.uColPtr[0] = 1;
+    lu.u_col_ptr[0] = 1;
 
     //ifill(pattern, nrow, 0)
     //ifill(found, nrow, 0)
     //rfill(rwork, nrow, 0)
-    ifill(&mut lu.rowPerm, nrow, 0);
+    ifill(&mut lu.row_perm, nrow, 0);
 
-    match &opts.colPerm {
-        Some(colPerm) => {
+    match &opts.col_perm {
+        Some(col_perm) => {
             for jcol in 0..ncol {
-                lu.colPerm[jcol] = colPerm[jcol] + 1;
+                lu.col_perm[jcol] = col_perm[jcol] + 1;
             }
         }
         None => {
             for jcol in 0..ncol {
-                lu.colPerm[jcol] = jcol + 1
+                lu.col_perm[jcol] = jcol + 1
             }
         }
     }
@@ -167,39 +166,39 @@ pub fn factor(
     // Compute one column at a time.
     for jcol in 1..=ncol {
         // Mark pointer to new column, ensure it is large enough.
-        if lastlu + nrow >= lu.luSize {
-            let newSize = ((lu.luSize as f64) * opts.expandRatio) as usize;
+        if lastlu + nrow >= lu.lu_size {
+            let new_size = ((lu.lu_size as f64) * opts.expand_ratio) as usize;
 
-            println!("expanding LU to {} nonzeros", newSize);
+            println!("expanding LU to {} nonzeros", new_size);
 
-            let mut luNZ = vec![0.0; newSize];
-            luNZ[..lu.luSize].copy_from_slice(&lu.luNZ[..]);
-            lu.luNZ = luNZ;
+            let mut lu_nz = vec![0.0; new_size];
+            lu_nz[..lu.lu_size].copy_from_slice(&lu.lu_nz[..]);
+            lu.lu_nz = lu_nz;
 
-            let mut luRowInd = vec![0; newSize];
-            luRowInd[..lu.luSize].copy_from_slice(&lu.luRowInd[..]);
-            lu.luRowInd = luRowInd;
+            let mut lu_row_ind = vec![0; new_size];
+            lu_row_ind[..lu.lu_size].copy_from_slice(&lu.lu_row_ind[..]);
+            lu.lu_row_ind = lu_row_ind;
 
-            lu.luSize = newSize;
+            lu.lu_size = new_size;
         }
 
         // Set up nonzero pattern.
-        let (origRow, thisCol) = {
-            let jjj = lu.colPerm[jcol - 1];
-            for i in colptrA[jjj - 1]..colptrA[jjj] {
-                pattern[rowindA[i - 1] - 1] = 1;
+        let (orig_row, this_col) = {
+            let jjj = lu.col_perm[jcol - 1];
+            for i in colptr[jjj - 1]..colptr[jjj] {
+                pattern[rowind[i - 1] - 1] = 1;
             }
 
-            let thisCol = lu.colPerm[jcol - 1];
-            let origRow = cmatch[thisCol - 1];
+            let this_col = lu.col_perm[jcol - 1];
+            let orig_row = cmatch[this_col - 1];
 
-            pattern[origRow - 1] = 2;
+            pattern[orig_row - 1] = 2;
 
-            if lu.rowPerm[origRow - 1] != 0 {
+            if lu.row_perm[orig_row - 1] != 0 {
                 return Err("pivot row from max-matching already used".to_string());
             }
 
-            (origRow, thisCol)
+            (orig_row, this_col)
         };
 
         // Depth-first search from each above-diagonal nonzero of column
@@ -208,15 +207,15 @@ pub fn factor(
         // jcol of L.
         ludfs(
             jcol,
-            nzA,
-            &rowindA,
-            &colptrA,
+            nz,
+            &rowind,
+            &colptr,
             &mut lastlu,
-            &mut lu.luRowInd,
-            &mut lu.lColPtr,
-            &lu.uColPtr,
-            &lu.rowPerm,
-            &lu.colPerm,
+            &mut lu.lu_row_ind,
+            &mut lu.l_col_ptr,
+            &lu.u_col_ptr,
+            &lu.row_perm,
+            &lu.col_perm,
             &mut rwork,
             &mut found,
             &mut parent,
@@ -229,12 +228,12 @@ pub fn factor(
         lucomp(
             jcol,
             &mut lastlu,
-            &lu.luNZ,
-            &mut lu.luRowInd,
-            &lu.lColPtr,
-            &mut lu.uColPtr,
-            &lu.rowPerm,
-            &lu.colPerm,
+            &lu.lu_nz,
+            &mut lu.lu_row_ind,
+            &lu.l_col_ptr,
+            &mut lu.u_col_ptr,
+            &lu.row_perm,
+            &lu.col_perm,
             &mut rwork,
             &mut found,
             &pattern,
@@ -243,23 +242,23 @@ pub fn factor(
         // Copy the dense vector into the sparse data structure, find the
         // diagonal element (pivoting if specified), and divide the
         // column of L by it.
-        let nzCountLimit =
-            (opts.colFillRatio * ((colptrA[thisCol] - colptrA[thisCol - 1] + 1) as f64)) as usize;
+        let nz_count_limit =
+            (opts.col_fill_ratio * ((colptr[this_col] - colptr[this_col - 1] + 1) as f64)) as usize;
 
         let zpivot = lucopy(
-            &localPivotPolicy,
-            opts.pivotThreshold,
-            opts.dropThreshold,
-            nzCountLimit,
+            &local_pivot_policy,
+            opts.pivot_threshold,
+            opts.drop_threshold,
+            nz_count_limit,
             jcol,
             ncol,
             &mut lastlu,
-            &mut lu.luNZ,
-            &mut lu.luRowInd,
-            &mut lu.lColPtr,
-            &mut lu.uColPtr,
-            &mut lu.rowPerm,
-            &mut lu.colPerm,
+            &mut lu.lu_nz,
+            &mut lu.lu_row_ind,
+            &mut lu.l_col_ptr,
+            &mut lu.u_col_ptr,
+            &mut lu.row_perm,
+            &mut lu.col_perm,
             &mut rwork,
             &mut pattern,
             &mut twork,
@@ -269,27 +268,27 @@ pub fn factor(
         }
 
         {
-            let jjj = lu.colPerm[jcol - 1];
-            for i in colptrA[jjj - 1]..colptrA[jjj] {
-                pattern[rowindA[i - 1] - 1] = 0;
+            let jjj = lu.col_perm[jcol - 1];
+            for i in colptr[jjj - 1]..colptr[jjj] {
+                pattern[rowind[i - 1] - 1] = 0;
             }
 
-            pattern[origRow - 1] = 0;
+            pattern[orig_row - 1] = 0;
 
-            let pivtRow = zpivot;
-            let othrCol = rmatch[pivtRow as usize - 1];
+            let pivt_row = zpivot;
+            let othr_col = rmatch[pivt_row as usize - 1];
 
-            cmatch[thisCol - 1] = pivtRow as usize;
-            cmatch[othrCol - 1] = origRow;
-            rmatch[origRow - 1] = othrCol;
-            rmatch[pivtRow as usize - 1] = thisCol;
+            cmatch[this_col - 1] = pivt_row as usize;
+            cmatch[othr_col - 1] = orig_row;
+            rmatch[orig_row - 1] = othr_col;
+            rmatch[pivt_row as usize - 1] = this_col;
 
             //pattern[thisCol - 1] = 0
         }
 
         // If there are no diagonal elements after this column, change the pivot mode.
         if jcol == nrow {
-            localPivotPolicy = &PivotPolicy::NoDiagonalElement;
+            local_pivot_policy = &PivotPolicy::NoDiagonalElement;
         }
     }
 
@@ -297,14 +296,14 @@ pub fn factor(
     // rows so the data structure represents L and U, not PtL and PtU.
     let mut jcol = ncol + 1;
     for i in 0..nrow {
-        if lu.rowPerm[i] == 0 {
-            lu.rowPerm[i] = jcol;
+        if lu.row_perm[i] == 0 {
+            lu.row_perm[i] = jcol;
             jcol = jcol + 1;
         }
     }
 
     for i in 0..lastlu {
-        lu.luRowInd[i] = lu.rowPerm[lu.luRowInd[i] as usize - 1] as isize;
+        lu.lu_row_ind[i] = lu.row_perm[lu.lu_row_ind[i] as usize - 1] as isize;
     }
 
     Ok(lu)
@@ -313,7 +312,7 @@ pub fn factor(
 /// Solve Ax=b for one or more right-hand-sides given the numeric
 /// factorization of A from `factor`.
 pub fn solve(lu: &LU, rhs: &mut [&mut [f64]], trans: bool) -> Result<(), String> {
-    let n = lu.nA;
+    let n = lu.n;
     if rhs.len() == 0 {
         return Err("one or more rhs must be specified".to_string());
     }
@@ -334,46 +333,46 @@ pub fn solve(lu: &LU, rhs: &mut [&mut [f64]], trans: bool) -> Result<(), String>
         if !trans {
             lsolve(
                 n,
-                &lu.luNZ,
-                &lu.luRowInd,
-                &lu.lColPtr,
-                &lu.uColPtr,
-                &lu.rowPerm,
-                &lu.colPerm,
+                &lu.lu_nz,
+                &lu.lu_row_ind,
+                &lu.l_col_ptr,
+                &lu.u_col_ptr,
+                &lu.row_perm,
+                &lu.col_perm,
                 &b,
                 &mut work,
             )?;
             usolve(
                 n,
-                &lu.luNZ,
-                &lu.luRowInd,
-                &lu.lColPtr,
-                &lu.uColPtr,
-                &lu.rowPerm,
-                &lu.colPerm,
+                &lu.lu_nz,
+                &lu.lu_row_ind,
+                &lu.l_col_ptr,
+                &lu.u_col_ptr,
+                &lu.row_perm,
+                &lu.col_perm,
                 &mut work,
                 &mut b,
             )?;
         } else {
             utsolve(
                 n,
-                &lu.luNZ,
-                &lu.luRowInd,
-                &lu.lColPtr,
-                &lu.uColPtr,
-                &lu.rowPerm,
-                &lu.colPerm,
+                &lu.lu_nz,
+                &lu.lu_row_ind,
+                &lu.l_col_ptr,
+                &lu.u_col_ptr,
+                &lu.row_perm,
+                &lu.col_perm,
                 &b,
                 &mut work,
             )?;
             ltsolve(
                 n,
-                &lu.luNZ,
-                &lu.luRowInd,
-                &lu.lColPtr,
-                &lu.uColPtr,
-                &lu.rowPerm,
-                &lu.colPerm,
+                &lu.lu_nz,
+                &lu.lu_row_ind,
+                &lu.l_col_ptr,
+                &lu.u_col_ptr,
+                &lu.row_perm,
+                &lu.col_perm,
                 &mut work,
                 &mut b,
             )?;

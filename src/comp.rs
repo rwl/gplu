@@ -1,4 +1,4 @@
-use crate::internal::off;
+use crate::internal::OFF;
 
 pub fn lucomp(
     jcol: usize,
@@ -8,10 +8,10 @@ pub fn lucomp(
     lcolst: &[usize],
     ucolst: &mut [usize],
     rperm: &[usize],
-    cperm: &[usize],
+    _cperm: &[usize],
     dense: &mut [f64],
     found: &mut [usize],
-    pattern: &[usize],
+    _pattern: &[usize],
 ) {
     // Local variables:
     //   nzuptr                pointer to current nonzero PtU(krow,jcol).
@@ -28,12 +28,12 @@ pub fn lucomp(
 
     //    For each krow with PtU(krow,jcol) != 0, in reverse postorder, use
     //    column kcol = rperm(krow) of L to update the current column.
-    let nzuend = lcolst[jcol - off];
-    let nnzu = nzuend - ucolst[jcol - off];
+    let nzuend = lcolst[jcol - OFF];
+    let nnzu = nzuend - ucolst[jcol - OFF];
     if nnzu != 0 {
         for nzuind in 1..=nnzu {
             let nzuptr = nzuend - nzuind;
-            let krow = lurow[nzuptr - off] - 1;
+            let krow = lurow[nzuptr - OFF] - 1;
             let kcol = rperm[krow as usize] - 1;
             let ukj = dense[krow as usize];
             //if pattern[rperm[krow]-off] == 0 {
@@ -60,5 +60,5 @@ pub fn lucomp(
             }
         }
     }
-    ucolst[jcol + 1 - off] = *lastlu + 1;
+    ucolst[jcol + 1 - OFF] = *lastlu + 1;
 }
