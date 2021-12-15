@@ -243,7 +243,7 @@ pub fn factor(
         // diagonal element (pivoting if specified), and divide the
         // column of L by it.
         let nz_count_limit =
-            (opts.col_fill_ratio * ((colptr[this_col] - colptr[this_col - 1] + 1) as f64)) as usize;
+            (opts.col_fill_ratio * ((colptr[this_col] - colptr[this_col - 1] + 1) as f64)) as isize;
 
         let zpivot = lucopy(
             &local_pivot_policy,

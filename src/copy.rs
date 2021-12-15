@@ -6,7 +6,7 @@ pub fn lucopy(
     pivot: &PivotPolicy,
     pthresh: f64,
     dthresh: f64,
-    nzcount: usize,
+    nzcount: isize,
     jcol1: usize,
     _ncol: usize,
     lastlu: &mut usize,
@@ -127,10 +127,17 @@ pub fn lucopy(
                 twork[i] = dense[irow - OFF].abs();
                 i += 1;
             }
-            if nzcount < i {
+            if (nzcount as usize) < i {
                 let mut kth: f64 = 0.0;
                 let mut info: isize = 0;
-                dordstat(&mut rnd, i, i - nzcount + 1, twork, &mut kth, &mut info);
+                dordstat(
+                    &mut rnd,
+                    i,
+                    i - (nzcount as usize) + 1,
+                    twork,
+                    &mut kth,
+                    &mut info,
+                );
                 udthreshabs = kth;
             } else {
                 udthreshabs = 0.0;
@@ -142,10 +149,17 @@ pub fn lucopy(
                 twork[i] = dense[irow - OFF].abs();
                 i += 1;
             }
-            if nzcount < i {
+            if (nzcount as usize) < i {
                 let mut kth: f64 = 0.0;
                 let mut info: isize = 0;
-                dordstat(&mut rnd, i, i - nzcount + 1, twork, &mut kth, &mut info);
+                dordstat(
+                    &mut rnd,
+                    i,
+                    i - (nzcount as usize) + 1,
+                    twork,
+                    &mut kth,
+                    &mut info,
+                );
                 ldthreshabs = kth;
             } else {
                 ldthreshabs = 0.0;
