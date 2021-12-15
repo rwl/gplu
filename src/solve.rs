@@ -62,7 +62,7 @@ pub fn ltsolve(
     for i in 1..=n {
         x[i - OFF] = b[i - OFF];
     }
-    for j in (n..=1).rev() {
+    for j in (1..=n).rev() {
         let nzst = lcolst[j - OFF];
         let nzend = ucolst[j + 1 - OFF] - 1;
         if nzst < 1 || nzst > nzend + 1 {
