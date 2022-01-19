@@ -77,3 +77,15 @@ pub fn dordstat(
     *kth = a[p - OFF];
     *info = 0;
 }
+
+#[cfg(feature = "debug")]
+macro_rules! debug_println {
+    ($( $args:expr ),*) => { println!( $( $args ),* ); }
+}
+
+#[cfg(not(feature = "debug"))]
+macro_rules! debug_println {
+    ($( $args:expr ),*) => {};
+}
+
+pub(crate) use debug_println;

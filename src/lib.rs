@@ -9,7 +9,7 @@ mod solve;
 use comp::lucomp;
 use copy::lucopy;
 use dfs::ludfs;
-use internal::ifill;
+use internal::*;
 use maxmatch::maxmatch;
 use rlu::*;
 use solve::*;
@@ -33,7 +33,7 @@ pub struct LU {
 ///
 /// Given a matrix A in sparse format by columns, it performs an LU
 /// factorization, with partial or threshold pivoting, if desired. The
-/// factorization is PA = LU, where L and U are triangular. P, L, and U
+/// factorization is `PA = LU`, where `L` and `U` are triangular. `P`, `L`, and `U`
 /// are returned.  This subroutine uses the Coleman-Gilbert-Peierls
 /// algorithm, in which total time is O(nonzero multiplications).
 pub fn factor(
@@ -130,9 +130,10 @@ pub fn factor(
         &mut lu.lu_row_ind,
     )?;
 
+    #[cfg(feature = "debug")]
     for jcol in 0..ncol {
         if cmatch[jcol] == 0 {
-            println!("warning: perfect matching not found");
+            debug_println!("warning: perfect matching not found");
             break;
         }
     }
@@ -169,7 +170,7 @@ pub fn factor(
         if lastlu + nrow >= lu.lu_size {
             let new_size = ((lu.lu_size as f64) * opts.expand_ratio) as usize;
 
-            println!("expanding LU to {} nonzeros", new_size);
+            debug_println!("expanding LU to {} nonzeros", new_size);
 
             let mut lu_nz = vec![0.0; new_size];
             lu_nz[..lu.lu_size].copy_from_slice(&lu.lu_nz[..]);
@@ -306,10 +307,25 @@ pub fn factor(
         lu.lu_row_ind[i] = lu.row_perm[lu.lu_row_ind[i] as usize - 1] as isize;
     }
 
+    #[cfg(feature = "debug")]
+    {
+        let mut ujj: f64 = 0.0;
+        let mut minujj = f64::INFINITY;
+
+        for jcol in 1..=ncol {
+            ujj = (lu.lu_nz[lu.l_col_ptr[jcol - 1] - 2]).abs();
+            if ujj < minujj {
+                minujj = ujj;
+            }
+        }
+
+        debug_println!("last = {}, min = {}", ujj, minujj);
+    }
+
     Ok(lu)
 }
 
-/// Solve Ax=b for one or more right-hand-sides given the numeric
+/// Solve `Ax=b` for one or more right-hand-sides given the numeric
 /// factorization of A from `factor`.
 pub fn solve(lu: &LU, rhs: &mut [&mut [f64]], trans: bool) -> Result<(), String> {
     let n = lu.n;
