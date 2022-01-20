@@ -1,15 +1,16 @@
 use crate::internal::OFF;
+use crate::Scalar;
 
-pub fn lsolve(
+pub fn lsolve<S: Scalar>(
     n: usize,
-    lu: &[f64],
+    lu: &[S],
     lurow: &[isize],
     lcolst: &[usize],
     ucolst: &[usize],
     rperm: &[usize],
     _cperm: &[usize],
-    b: &[f64],
-    x: &mut [f64],
+    b: &[S],
+    x: &mut [S],
 ) -> Result<(), String> {
     if n <= 0 {
         return Err(format!("lsolve called with nonpositive n = {}", n));
@@ -44,16 +45,16 @@ pub fn lsolve(
     Ok(())
 }
 
-pub fn ltsolve(
+pub fn ltsolve<S: Scalar>(
     n: usize,
-    lu: &[f64],
+    lu: &[S],
     lurow: &[isize],
     lcolst: &[usize],
     ucolst: &[usize],
     rperm: &[usize],
     _cperm: &[usize],
-    b: &mut [f64],
-    x: &mut [f64],
+    b: &mut [S],
+    x: &mut [S],
 ) -> Result<(), String> {
     if n <= 0 {
         return Err(format!("ltsolve called with nonpositive n={}", n));
@@ -98,16 +99,16 @@ pub fn ltsolve(
     Ok(())
 }
 
-pub fn usolve(
+pub fn usolve<S: Scalar>(
     n: usize,
-    lu: &[f64],
+    lu: &[S],
     lurow: &[isize],
     lcolst: &[usize],
     ucolst: &[usize],
     _rperm: &[usize],
     cperm: &[usize],
-    b: &mut [f64],
-    x: &mut [f64],
+    b: &mut [S],
+    x: &mut [S],
 ) -> Result<(), String> {
     if n <= 0 {
         return Err(format!("usolve called with nonpositive n={}", n));
@@ -129,7 +130,7 @@ pub fn usolve(
         if lurow[nzend - OFF] != j as isize {
             return Err(format!("usolve, diagonal elt of col j is not in last place: j={}, nzend={}, lurow[nzend]={}", j, nzend, lurow[nzend- OFF]));
         }
-        if lu[nzend - OFF] == 0.0 {
+        if lu[nzend - OFF] == S::zero() {
             return Err(format!("usolve, zero diagonal element in column j={}", j));
         }
         x[j - OFF] = x[j - OFF] / lu[nzend - OFF];
@@ -159,16 +160,16 @@ pub fn usolve(
     Ok(())
 }
 
-pub fn utsolve(
+pub fn utsolve<S: Scalar>(
     n: usize,
-    lu: &[f64],
+    lu: &[S],
     lurow: &[isize],
     lcolst: &[usize],
     ucolst: &[usize],
     _rperm: &[usize],
     cperm: &[usize],
-    b: &[f64],
-    x: &mut [f64],
+    b: &[S],
+    x: &mut [S],
 ) -> Result<(), String> {
     if n <= 0 {
         return Err(format!("utsolve called with nonpositive n={}", n));
@@ -189,7 +190,7 @@ pub fn utsolve(
         if lurow[nzend - OFF] != j as isize {
             return Err(format!("utsolve, diagonal elt of col j is not in last place: j={}, nzend={}, lurow[nzend]={}", j, nzend, lurow[nzend- OFF]));
         }
-        if lu[nzend - OFF] == 0.0 {
+        if lu[nzend - OFF] == S::zero() {
             return Err(format!("utsolve, zero diagonal element in column j={}", j));
         }
         nzend = nzend - 1;

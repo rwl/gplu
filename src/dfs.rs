@@ -1,8 +1,9 @@
 use crate::internal::OFF;
+use crate::scalar::Scalar;
 
-pub fn ludfs(
+pub fn ludfs<S: Scalar>(
     jcol: usize,
-    a: &[f64],
+    a: &[S],
     arow: &[usize],
     acolst: &[usize],
     lastlu: &mut usize,
@@ -11,7 +12,7 @@ pub fn ludfs(
     ucolst: &[usize],
     rperm: &[usize],
     cperm: &[usize],
-    dense: &mut [f64],
+    dense: &mut [S],
     found: &mut [usize],
     parent: &mut [usize],
     child: &mut [usize],
@@ -41,7 +42,9 @@ pub fn ludfs(
         // PA, start a depth-first search in column rperm(krow) of L.
 
         dense[krow as usize] = a[nzaptr];
-        if rperm[krow as usize] == 0 || found[krow as usize] == jcol || dense[krow as usize] == 0.0
+        if rperm[krow as usize] == 0
+            || found[krow as usize] == jcol
+            || dense[krow as usize] == S::zero()
         {
             continue;
         }

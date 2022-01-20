@@ -1,24 +1,31 @@
+extern crate num_complex;
+extern crate num_traits;
+
 mod comp;
 mod copy;
 mod dfs;
 mod internal;
 mod maxmatch;
 mod rlu;
+mod scalar;
 mod solve;
 
+use crate::scalar::Scalar;
 use comp::lucomp;
 use copy::lucopy;
 use dfs::ludfs;
 use internal::*;
 use maxmatch::maxmatch;
+use num_traits::PrimInt;
 pub use rlu::*;
 use solve::*;
+use std::fmt::Display;
 
 /// LU is a lower-upper numeric factorization.
 #[derive(Debug)]
-pub struct LU {
+pub struct LU<S: Scalar> {
     lu_size: usize,
-    lu_nz: Vec<f64>,
+    lu_nz: Vec<S>,
     lu_row_ind: Vec<isize>,
     l_col_ptr: Vec<usize>,
     u_col_ptr: Vec<usize>,
@@ -36,13 +43,15 @@ pub struct LU {
 /// factorization is `PA = LU`, where `L` and `U` are triangular. `P`, `L`, and `U`
 /// are returned.  This subroutine uses the Coleman-Gilbert-Peierls
 /// algorithm, in which total time is O(nonzero multiplications).
-pub fn factor(
-    n: usize,
-    rowind0: &[usize],
-    colptr0: &[usize],
-    nz: &[f64],
-    opts: &Options,
-) -> Result<LU, String> {
+pub fn factor<I: PrimInt + Display, S: Scalar>(
+    nn: I,
+    rowind0: &[I],
+    colptr0: &[I],
+    nz: &[S],
+    opts: &Options<I>,
+) -> Result<LU<S>, String> {
+    let n = nn.to_usize().unwrap();
+
     let nrow = n;
     let ncol = n;
     let nnz = nz.len();
@@ -76,7 +85,7 @@ pub fn factor(
                 ));
             }
             for v in col_perm.iter() {
-                if v < &0 || v >= &ncol {
+                if v < &I::zero() || v >= &I::from(ncol).unwrap() {
                     return Err(format!(
                         "column permutation {} out of range [0,{})",
                         v, ncol
@@ -91,14 +100,14 @@ pub fn factor(
     let mut colptr = vec![0; n + 1];
     let mut rowind = vec![0; nnz];
     for jcol in 0..n + 1 {
-        colptr[jcol] = colptr0[jcol] + 1;
+        colptr[jcol] = colptr0[jcol].to_usize().unwrap() + 1;
     }
     for jcol in 0..nnz {
-        rowind[jcol] = rowind0[jcol] + 1;
+        rowind[jcol] = rowind0[jcol].to_usize().unwrap() + 1;
     }
 
     // Allocate work arrays.
-    let mut rwork = vec![0.0; nrow];
+    let mut rwork = vec![S::zero(); nrow];
     let mut twork = vec![0.0; nrow];
     let mut found = vec![0; nrow];
     let mut child = vec![0; nrow];
@@ -109,7 +118,7 @@ pub fn factor(
     let lu_size = ((nnz as f64) * opts.fill_ratio) as usize;
     let mut lu = LU {
         lu_size: lu_size,
-        lu_nz: vec![0.0; lu_size],
+        lu_nz: vec![S::zero(); lu_size],
         lu_row_ind: vec![0; lu_size],
         u_col_ptr: vec![0; ncol + 1],
         l_col_ptr: vec![0; ncol],
@@ -154,7 +163,7 @@ pub fn factor(
     match &opts.col_perm {
         Some(col_perm) => {
             for jcol in 0..ncol {
-                lu.col_perm[jcol] = col_perm[jcol] + 1;
+                lu.col_perm[jcol] = col_perm[jcol].to_usize().unwrap() + 1;
             }
         }
         None => {
@@ -172,7 +181,7 @@ pub fn factor(
 
             debug_println!("expanding LU to {} nonzeros", new_size);
 
-            let mut lu_nz = vec![0.0; new_size];
+            let mut lu_nz = vec![S::zero(); new_size];
             lu_nz[..lu.lu_size].copy_from_slice(&lu.lu_nz[..]);
             lu.lu_nz = lu_nz;
 
@@ -327,7 +336,7 @@ pub fn factor(
 
 /// Solve `Ax=b` for one or more right-hand-sides given the numeric
 /// factorization of A from `factor`.
-pub fn solve(lu: &LU, rhs: &mut [&mut [f64]], trans: bool) -> Result<(), String> {
+pub fn solve<S: Scalar>(lu: &LU<S>, rhs: &mut [&mut [S]], trans: bool) -> Result<(), String> {
     let n = lu.n;
     if rhs.len() == 0 {
         return Err("one or more rhs must be specified".to_string());
@@ -342,7 +351,7 @@ pub fn solve(lu: &LU, rhs: &mut [&mut [f64]], trans: bool) -> Result<(), String>
             ));
         }
     }
-    let mut work = vec![0.0; n];
+    let mut work = vec![S::zero(); n];
 
     for i in 0..rhs.len() {
         let mut b = &mut rhs[i];

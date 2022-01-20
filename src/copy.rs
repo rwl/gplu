@@ -1,8 +1,8 @@
 use crate::internal::{dordstat, OFF};
-
 use crate::rlu::PivotPolicy;
+use crate::Scalar;
 
-pub fn lucopy(
+pub fn lucopy<S: Scalar>(
     pivot: &PivotPolicy,
     pthresh: f64,
     dthresh: f64,
@@ -10,13 +10,13 @@ pub fn lucopy(
     jcol1: usize,
     _ncol: usize,
     lastlu: &mut usize,
-    lu: &mut [f64],
+    lu: &mut [S],
     lurow: &mut [isize],
     lcolst: &mut [usize],
     ucolst: &mut [usize],
     rperm: &mut [usize],
     cperm: &[usize],
-    dense: &mut [f64],
+    dense: &mut [S],
     pattern: &[usize],
     twork: &mut [f64],
 ) -> Result<isize, String> {
@@ -55,10 +55,10 @@ pub fn lucopy(
             if pattern[irow] != 0 || irow == cperm[jcol] - 1 {
                 lurow[nzcpy] = irow as isize + 1;
                 lu[nzcpy] = dense[irow];
-                dense[irow] = 0.0;
+                dense[irow] = S::zero();
                 nzcpy += 1;
             } else {
-                dense[irow] = 0.0;
+                dense[irow] = S::zero();
             }
         }
         let lastu = nzcpy;
@@ -73,10 +73,10 @@ pub fn lucopy(
             if pattern[irow] != 0 || /*irow == cperm(jcol-off)) then*/ pattern[irow] == 2 {
                 lurow[nzcpy] = irow as isize + 1;
                 lu[nzcpy] = dense[irow];
-                dense[irow] = 0.0;
+                dense[irow] = S::zero();
                 nzcpy += 1;
             } else {
-                dense[irow] = 0.0;
+                dense[irow] = S::zero();
             }
         }
 
@@ -176,10 +176,10 @@ pub fn lucopy(
                 if pattern[irow] != 0 || dense[irow].abs() >= udthreshabs {
                     lurow[nzcpy] = irow as isize + 1;
                     lu[nzcpy] = dense[irow];
-                    dense[irow] = 0.0;
+                    dense[irow] = S::zero();
                     nzcpy += 1;
                 } else {
-                    dense[irow] = 0.0;
+                    dense[irow] = S::zero();
                 }
             }
         }
@@ -265,7 +265,7 @@ pub fn lucopy(
             // Pattern + threshold dropping.
 
             if pattern[irow] == 0 && irow != diagptr - 1 && utemp < ldthreshabs {
-                dense[irow] = 0.0;
+                dense[irow] = S::zero();
             } else {
                 if irow == diagptr - 1 {
                     ujjptr = nzcpy + 1;
@@ -273,7 +273,7 @@ pub fn lucopy(
 
                 lurow[nzcpy] = irow as isize + 1;
                 lu[nzcpy] = dense[irow];
-                dense[irow] = 0.0;
+                dense[irow] = S::zero();
                 nzcpy += 1;
             }
         }
@@ -297,7 +297,7 @@ pub fn lucopy(
     let pivrow = lurow[ujjptr - OFF];
     let ujj = lu[ujjptr - OFF];
 
-    if ujj == 0.0 {
+    if ujj == S::zero() {
         return Err(format!(
             "numerically zero diagonal element at column {}",
             jcol1

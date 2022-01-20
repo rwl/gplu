@@ -1,15 +1,16 @@
 use crate::internal::OFF;
+use crate::Scalar;
 
-pub fn lucomp(
+pub fn lucomp<S: Scalar>(
     jcol: usize,
     lastlu: &mut usize,
-    lu: &[f64],
+    lu: &[S],
     lurow: &mut [isize],
     lcolst: &[usize],
     ucolst: &mut [usize],
     rperm: &[usize],
     _cperm: &[usize],
-    dense: &mut [f64],
+    dense: &mut [S],
     found: &mut [usize],
     _pattern: &[usize],
 ) {
