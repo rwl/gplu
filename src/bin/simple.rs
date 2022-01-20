@@ -1,8 +1,5 @@
 extern crate rlu;
 
-use rlu::rlu::Options;
-use rlu::{factor, solve};
-
 /// Factorizes a 10x10 matrix, given a column permutation
 /// vector, and solves for a single right-hand-side.
 fn main() {
@@ -36,12 +33,12 @@ fn main() {
 
     let col_perm = vec![6, 5, 2, 4, 1, 9, 7, 8, 0, 3];
 
-    let mut opts = Options::new();
+    let mut opts = rlu::Options::new();
     opts.col_perm = Some(col_perm);
 
-    let lu = factor(n, &arow, &acolst, &a, &opts).unwrap();
+    let lu = rlu::factor(n, &arow, &acolst, &a, &opts).unwrap();
 
-    solve(&lu, &mut rhs, true).unwrap();
+    rlu::solve(&lu, &mut rhs, true).unwrap();
 
     println!("{:?}", b);
 }

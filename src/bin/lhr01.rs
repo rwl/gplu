@@ -1,8 +1,5 @@
 extern crate rlu;
 
-use rlu::rlu::Options;
-use rlu::{factor, solve};
-
 const ANSWER: f64 = 1.0;
 
 fn main() {
@@ -13,15 +10,15 @@ fn main() {
     // Set exact solution; then compute right-hand-side vector.
     let x0 = vec![ANSWER; n];
 
-    let mut opts = Options::new();
+    let mut opts = rlu::Options::new();
     opts.expand_ratio = 2.0;
 
     let mut b = mat_vec(n, &rowind, &colst, &nz, &x0);
     let mut rhs: Vec<&mut [f64]> = vec![&mut b];
 
-    let lu = factor(n, &rowind, &colst, &nz, &opts).unwrap();
+    let lu = rlu::factor(n, &rowind, &colst, &nz, &opts).unwrap();
 
-    solve(&lu, &mut rhs, false).unwrap();
+    rlu::solve(&lu, &mut rhs, false).unwrap();
 
     println!("resid = {}", residual(&b));
 }

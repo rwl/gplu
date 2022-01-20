@@ -3,7 +3,7 @@ mod copy;
 mod dfs;
 mod internal;
 mod maxmatch;
-pub mod rlu;
+mod rlu;
 mod solve;
 
 use comp::lucomp;
@@ -11,7 +11,7 @@ use copy::lucopy;
 use dfs::ludfs;
 use internal::*;
 use maxmatch::maxmatch;
-use rlu::*;
+pub use rlu::*;
 use solve::*;
 
 /// LU is a lower-upper numeric factorization.
