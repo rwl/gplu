@@ -2,6 +2,11 @@
 name = "rlu"
 version = "0.1.0"
 edition = "2018"
+description = "Sparse LU factorization with partial pivoting"
+repository = "https://github.com/rwl/rlu/"
+license = "BSD-3-Clause"
+categories = ["algorithms", "mathematics", "science"]
+default-run = "simple"
 
 [dependencies]
 num-traits = "0.2"
