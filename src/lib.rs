@@ -22,7 +22,7 @@ use solve::*;
 use std::fmt::Display;
 
 /// LU is a lower-upper numeric factorization.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LU<S: Scalar> {
     lu_size: usize,
     lu_nz: Vec<S>,
