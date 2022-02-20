@@ -10,7 +10,6 @@ mod rlu;
 mod scalar;
 mod solve;
 
-use crate::scalar::Scalar;
 use comp::lucomp;
 use copy::lucopy;
 use dfs::ludfs;
@@ -18,6 +17,7 @@ use internal::*;
 use maxmatch::maxmatch;
 use num_traits::PrimInt;
 pub use rlu::*;
+pub use scalar::Scalar;
 use solve::*;
 use std::fmt::Display;
 
@@ -48,7 +48,8 @@ pub fn factor<I: PrimInt + Display, S: Scalar>(
     rowind0: &[I],
     colptr0: &[I],
     nz: &[S],
-    opts: &Options<I>,
+    col_perm: Option<&[I]>,
+    opts: &Options,
 ) -> Result<LU<S>, String> {
     let n = nn.to_usize().unwrap();
 
@@ -74,7 +75,7 @@ pub fn factor<I: PrimInt + Display, S: Scalar>(
         ));
     }
 
-    match &opts.col_perm {
+    match col_perm {
         Some(col_perm) => {
             // If a column permutation is specified, it must be a length ncol permutation.
             if col_perm.len() != ncol {
@@ -160,7 +161,7 @@ pub fn factor<I: PrimInt + Display, S: Scalar>(
     //rfill(rwork, nrow, 0)
     ifill(&mut lu.row_perm, nrow, 0);
 
-    match &opts.col_perm {
+    match col_perm {
         Some(col_perm) => {
             for jcol in 0..ncol {
                 lu.col_perm[jcol] = col_perm[jcol].to_usize().unwrap() + 1;

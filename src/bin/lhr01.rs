@@ -10,13 +10,16 @@ fn main() {
     // Set exact solution; then compute right-hand-side vector.
     let x0 = vec![ANSWER; n];
 
-    let mut opts = rlu::Options::new();
-    opts.expand_ratio = 2.0;
+    let opts = rlu::Options {
+        expand_ratio: 2.0,
+
+        ..rlu::Options::default()
+    };
 
     let mut b = mat_vec(n, &rowind, &colst, &nz, &x0);
     let mut rhs: Vec<&mut [f64]> = vec![&mut b];
 
-    let lu = rlu::factor(n, &rowind, &colst, &nz, &opts).unwrap();
+    let lu = rlu::factor(n, &rowind, &colst, &nz, None, &opts).unwrap();
 
     rlu::solve(&lu, &mut rhs, false).unwrap();
 

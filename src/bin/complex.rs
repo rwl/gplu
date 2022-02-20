@@ -42,10 +42,9 @@ fn main() {
 
     let col_perm = vec![6, 5, 2, 4, 1, 9, 7, 8, 0, 3];
 
-    let mut opts = rlu::Options::new();
-    opts.col_perm = Some(col_perm);
+    let opts = rlu::Options::default();
 
-    let lu = rlu::factor::<i64, Complex32>(n, &arow, &acolst, &a, &opts).unwrap();
+    let lu = rlu::factor::<i64, Complex32>(n, &arow, &acolst, &a, Some(&col_perm), &opts).unwrap();
 
     rlu::solve(&lu, &mut rhs, true).unwrap();
 
