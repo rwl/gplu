@@ -17,11 +17,10 @@ fn main() {
     };
 
     let mut b = mat_vec(n, &rowind, &colst, &nz, &x0);
-    let mut rhs: Vec<&mut [f64]> = vec![&mut b];
 
     let lu = rlu::factor(n, &rowind, &colst, &nz, None, &opts).unwrap();
 
-    rlu::solve(&lu, &mut rhs, false).unwrap();
+    rlu::solve(&lu, &mut b, false).unwrap();
 
     println!("resid = {}", residual(&b));
 }

@@ -26,10 +26,10 @@ fn main() {
         0.32, 1.9, 0.43, 0.14, 0.19, 1.1, 0.22, 0.09, 0.32, 0.22, 2.4, 0.03, 0.04, 0.44, 0.43, 3.2,
     ];
 
-    let mut b = vec![
+    let b = vec![
         0.403, 0.28, 0.55, 1.504, 0.812, 1.32, 1.888, 1.168, 2.473, 3.695,
     ];
-    let mut rhs: Vec<&mut [f64]> = vec![&mut b];
+    // let mut rhs: Vec<&mut [f64]> = vec![&mut b];
 
     let col_perm = vec![6, 5, 2, 4, 1, 9, 7, 8, 0, 3];
 
@@ -37,7 +37,10 @@ fn main() {
 
     let lu = rlu::factor::<i64, f64>(n, &arow, &acolst, &a, Some(&col_perm), &opts).unwrap();
 
-    rlu::solve(&lu, &mut rhs, true).unwrap();
+    let mut x = [b.clone(), b].concat();
 
-    println!("{:?}", b);
+    rlu::solve(&lu, &mut x, false).unwrap();
+
+    println!("{:?}", x[..n as usize].to_vec());
+    println!("{:?}", x[n as usize..].to_vec());
 }

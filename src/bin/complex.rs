@@ -38,15 +38,13 @@ fn main() {
     .map(|v| Complex32::from(v))
     .collect::<Vec<Complex32>>();
 
-    let mut rhs: Vec<&mut [Complex32]> = vec![&mut b];
-
     let col_perm = vec![6, 5, 2, 4, 1, 9, 7, 8, 0, 3];
 
     let opts = rlu::Options::default();
 
     let lu = rlu::factor::<i64, Complex32>(n, &arow, &acolst, &a, Some(&col_perm), &opts).unwrap();
 
-    rlu::solve(&lu, &mut rhs, true).unwrap();
+    rlu::solve(&lu, &mut b, true).unwrap();
 
     println!("{:?}", b.iter().map(|v| v.re).collect::<Vec<f32>>());
 }
