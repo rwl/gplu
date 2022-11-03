@@ -6,7 +6,6 @@ description = "Sparse LU factorization with partial pivoting"
 repository = "https://github.com/rwl/rlu/"
 license = "BSD-3-Clause"
 categories = ["algorithms", "mathematics", "science"]
-default-run = "simple"
 
 [dependencies]
 num-traits = "0.2"
@@ -15,3 +14,7 @@ rayon = { version = "1.5", optional = true }
 
 [features]
 debug = []
+
+[[example]]
+name = "simple"
+required-features = ["rayon"]

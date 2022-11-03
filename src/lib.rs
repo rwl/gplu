@@ -12,6 +12,7 @@ mod rlu;
 mod scalar;
 mod solve;
 
+pub use crate::rlu::*;
 use comp::lucomp;
 use copy::lucopy;
 use dfs::ludfs;
@@ -20,7 +21,6 @@ use maxmatch::maxmatch;
 use num_traits::PrimInt;
 #[cfg(feature = "rayon")]
 pub use par::par_solve;
-pub use rlu::*;
 pub use scalar::Scalar;
 use solve::*;
 use std::fmt::Display;
