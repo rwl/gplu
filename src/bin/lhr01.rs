@@ -22,7 +22,9 @@ fn main() {
 
     rlu::solve(&lu, &mut b, false).unwrap();
 
-    println!("resid = {}", residual(&b));
+    let resid = residual(&b);
+    assert!(resid < 1e-10);
+    println!("resid = {}", resid);
 }
 
 fn mat_vec(n: usize, rowind: &[usize], colst: &[usize], nz: &[f64], x: &[f64]) -> Vec<f64> {
