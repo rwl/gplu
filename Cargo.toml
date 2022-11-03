@@ -11,7 +11,7 @@ default-run = "simple"
 [dependencies]
 num-traits = "0.2"
 num-complex = "0.4"
-rayon = "1.5"
+rayon = { version = "1.5", optional = true }
 
 [features]
 debug = []

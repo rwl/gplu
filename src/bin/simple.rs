@@ -39,7 +39,7 @@ fn main() {
 
     let mut x = [b.clone(), b].concat();
 
-    rlu::solve(&lu, &mut x, false).unwrap();
+    rlu::par_solve(&lu, &mut x, false).unwrap();
 
     println!("{:?}", x[..n as usize].to_vec());
     println!("{:?}", x[n as usize..].to_vec());
