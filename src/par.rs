@@ -1,5 +1,5 @@
 use crate::scalar::Scalar;
-use crate::solve::*;
+use crate::solve::lu_solve;
 use crate::LU;
 use rayon::iter::ParallelIterator;
 use rayon::slice::ParallelSliceMut;
@@ -20,57 +20,8 @@ pub fn par_solve<S: Scalar + Send + Sync>(
         ));
     }
 
-    rhs.par_chunks_exact_mut(n).try_for_each_with(
-        vec![S::zero(); n],
-        |mut work, mut b| -> Result<(), String> {
-            if !trans {
-                lsolve(
-                    n,
-                    &lu.lu_nz,
-                    &lu.lu_row_ind,
-                    &lu.l_col_ptr,
-                    &lu.u_col_ptr,
-                    &lu.row_perm,
-                    &lu.col_perm,
-                    &b,
-                    &mut work,
-                )?;
-                usolve(
-                    n,
-                    &lu.lu_nz,
-                    &lu.lu_row_ind,
-                    &lu.l_col_ptr,
-                    &lu.u_col_ptr,
-                    &lu.row_perm,
-                    &lu.col_perm,
-                    &mut work,
-                    &mut b,
-                )?;
-            } else {
-                utsolve(
-                    n,
-                    &lu.lu_nz,
-                    &lu.lu_row_ind,
-                    &lu.l_col_ptr,
-                    &lu.u_col_ptr,
-                    &lu.row_perm,
-                    &lu.col_perm,
-                    &b,
-                    &mut work,
-                )?;
-                ltsolve(
-                    n,
-                    &lu.lu_nz,
-                    &lu.lu_row_ind,
-                    &lu.l_col_ptr,
-                    &lu.u_col_ptr,
-                    &lu.row_perm,
-                    &lu.col_perm,
-                    &mut work,
-                    &mut b,
-                )?;
-            }
-            return Ok(());
-        },
-    )
+    rhs.par_chunks_exact_mut(n)
+        .try_for_each_with(vec![S::zero(); n], |work, b| -> Result<(), String> {
+            lu_solve(lu, b, work, trans)
+        })
 }

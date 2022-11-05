@@ -22,7 +22,7 @@ use num_traits::PrimInt;
 #[cfg(feature = "rayon")]
 pub use par::par_solve;
 pub use scalar::Scalar;
-use solve::*;
+use solve::lu_solve;
 use std::fmt::Display;
 
 /// LU is a lower-upper numeric factorization.
@@ -350,60 +350,8 @@ pub fn solve<S: Scalar>(lu: &LU<S>, rhs: &mut [S], trans: bool) -> Result<(), St
             n
         ));
     }
-    let nrhs = rhs.len() / n;
-
     let mut work = vec![S::zero(); n];
 
-    for i in 0..nrhs {
-        let mut b = &mut rhs[i * n..i * n + n];
-        if !trans {
-            lsolve(
-                n,
-                &lu.lu_nz,
-                &lu.lu_row_ind,
-                &lu.l_col_ptr,
-                &lu.u_col_ptr,
-                &lu.row_perm,
-                &lu.col_perm,
-                &b,
-                &mut work,
-            )?;
-            usolve(
-                n,
-                &lu.lu_nz,
-                &lu.lu_row_ind,
-                &lu.l_col_ptr,
-                &lu.u_col_ptr,
-                &lu.row_perm,
-                &lu.col_perm,
-                &mut work,
-                &mut b,
-            )?;
-        } else {
-            utsolve(
-                n,
-                &lu.lu_nz,
-                &lu.lu_row_ind,
-                &lu.l_col_ptr,
-                &lu.u_col_ptr,
-                &lu.row_perm,
-                &lu.col_perm,
-                &b,
-                &mut work,
-            )?;
-            ltsolve(
-                n,
-                &lu.lu_nz,
-                &lu.lu_row_ind,
-                &lu.l_col_ptr,
-                &lu.u_col_ptr,
-                &lu.row_perm,
-                &lu.col_perm,
-                &mut work,
-                &mut b,
-            )?;
-        }
-    }
-
-    return Ok(());
+    rhs.chunks_exact_mut(n)
+        .try_for_each(|b| lu_solve(lu, b, &mut work, trans))
 }

@@ -1,4 +1,66 @@
-use crate::Scalar;
+use crate::scalar::Scalar;
+use crate::LU;
+
+pub fn lu_solve<S: Scalar>(
+    lu: &LU<S>,
+    b: &mut [S],
+    work: &mut [S],
+    trans: bool,
+) -> Result<(), String> {
+    if b.len() != lu.n {
+        return Err(format!("len b ({}) must be n ({})", b.len(), lu.n));
+    }
+
+    if !trans {
+        lsolve(
+            lu.n,
+            &lu.lu_nz,
+            &lu.lu_row_ind,
+            &lu.l_col_ptr,
+            &lu.u_col_ptr,
+            &lu.row_perm,
+            &lu.col_perm,
+            b,
+            work,
+        )?;
+        usolve(
+            lu.n,
+            &lu.lu_nz,
+            &lu.lu_row_ind,
+            &lu.l_col_ptr,
+            &lu.u_col_ptr,
+            &lu.row_perm,
+            &lu.col_perm,
+            work,
+            b,
+        )?;
+    } else {
+        utsolve(
+            lu.n,
+            &lu.lu_nz,
+            &lu.lu_row_ind,
+            &lu.l_col_ptr,
+            &lu.u_col_ptr,
+            &lu.row_perm,
+            &lu.col_perm,
+            b,
+            work,
+        )?;
+        ltsolve(
+            lu.n,
+            &lu.lu_nz,
+            &lu.lu_row_ind,
+            &lu.l_col_ptr,
+            &lu.u_col_ptr,
+            &lu.row_perm,
+            &lu.col_perm,
+            work,
+            b,
+        )?;
+    }
+
+    return Ok(());
+}
 
 pub fn lsolve<S: Scalar>(
     n: usize,
