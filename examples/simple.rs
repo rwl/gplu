@@ -37,10 +37,20 @@ fn main() {
 
     let lu = rlu::factor::<i64, f64>(n, &arow, &acolst, &a, Some(&col_perm), &opts).unwrap();
 
-    let mut x = [b.clone(), b].concat();
+    {
+        let mut x = [b.clone(), b.clone()].concat();
 
-    rlu::par_solve(&lu, &mut x, false).unwrap();
+        rlu::solve(&lu, &mut x, false).unwrap();
 
-    println!("{:?}", x[..n as usize].to_vec());
-    println!("{:?}", x[n as usize..].to_vec());
+        println!("{:?}", x[..n as usize].to_vec());
+        println!("{:?}", x[n as usize..].to_vec());
+    }
+    {
+        let mut x = [b.clone(), b.clone()].concat();
+
+        rlu::solve(&lu, &mut x, true).unwrap();
+
+        println!("{:?}", x[..n as usize].to_vec());
+        println!("{:?}", x[n as usize..].to_vec());
+    }
 }
