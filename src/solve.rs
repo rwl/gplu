@@ -78,9 +78,10 @@ pub fn lsolve<S: Scalar>(
         return Err(format!("lsolve called with nonpositive n = {}", n));
     }
     // Solve the system.
-    for i in 0..n {
-        x[rperm[i] - 1] = b[i];
-    }
+    rperm
+        .iter()
+        .zip(b)
+        .for_each(|(rp_i, b_i)| x[rp_i - 1] = *b_i);
 
     for j in 0..n {
         let nzst = lcolst[j] - 1;
@@ -92,18 +93,23 @@ pub fn lsolve<S: Scalar>(
                 j, nzst, nzend
             ));
         }
+        #[cfg(feature = "debug")]
         for nzptr in nzst..nzend {
             let i = (lurow[nzptr] - 1) as usize;
-            #[cfg(feature = "debug")]
             if i <= j || i >= n {
                 return Err(format!(
                     "lsolve, illegal row i in column j of L: i={}, j={}, nzptr={}",
                     i, j, nzptr
                 ));
             }
-            x[i] -= lu[nzptr] * x[j];
         }
+
+        lurow[nzst..nzend]
+            .iter()
+            .zip(&lu[nzst..nzend])
+            .for_each(|(i, lu_nzptr)| x[(*i - 1) as usize] -= *lu_nzptr * x[j]);
     }
+
     Ok(())
 }
 
@@ -135,24 +141,28 @@ pub fn ltsolve<S: Scalar>(
                 j, nzst, nzend
             ));
         }
+        #[cfg(feature = "debug")]
         for nzptr in nzst..nzend {
             let i = (lurow[nzptr] as usize) - 1;
-            #[cfg(feature = "debug")]
             if i <= j || i >= n {
                 return Err(format!(
                     "ltsolve, illegal row i in column j of L: i={}, j={}, nzptr={}",
                     i, j, nzptr
                 ));
             }
-            x[j] -= lu[nzptr] * x[i];
         }
+
+        lurow[nzst..nzend]
+            .iter()
+            .zip(&lu[nzst..nzend])
+            .for_each(|(i, lu_nzptr)| x[j] -= *lu_nzptr * x[(*i - 1) as usize]);
     }
 
     b.copy_from_slice(x);
 
-    for i in 0..n {
-        x[i] = b[rperm[i] - 1];
-    }
+    x.iter_mut()
+        .zip(rperm.iter().map(|rp_i| b[rp_i - 1]))
+        .for_each(|(x_i, b_perm)| *x_i = b_perm);
 
     Ok(())
 }
@@ -192,28 +202,33 @@ pub fn usolve<S: Scalar>(
         if lu[nzend - 1] == S::zero() {
             return Err(format!("usolve, zero diagonal element in column j={}", j));
         }
-        x[j] = x[j] / lu[nzend - 1];
-
         let nzend = nzend - 1;
 
+        x[j] = x[j] / lu[nzend];
+
+        #[cfg(feature = "debug")]
         for nzptr in nzst..nzend {
             let i = (lurow[nzptr] - 1) as usize;
-            #[cfg(feature = "debug")]
             if lurow[nzptr] <= 0 || i >= j {
                 return Err(format!(
                     "usolve, illegal row i in column j of U: i={}, j={}, nzptr={}",
                     i, j, nzptr
                 ));
             }
-            x[i] -= lu[nzptr] * x[j];
         }
+
+        lurow[nzst..nzend]
+            .iter()
+            .zip(&lu[nzst..nzend])
+            .for_each(|(i, lu_nzptr)| x[(*i - 1) as usize] -= *lu_nzptr * x[j]);
     }
 
     b.copy_from_slice(x);
 
-    for i in 0..n {
-        x[cperm[i] - 1] = b[i];
-    }
+    cperm
+        .iter()
+        .zip(b)
+        .for_each(|(cp_i, b_i)| x[cp_i - 1] = *b_i);
 
     Ok(())
 }
@@ -233,9 +248,9 @@ pub fn utsolve<S: Scalar>(
     if n == 0 {
         return Err(format!("utsolve called with nonpositive n={}", n));
     }
-    for i in 0..n {
-        x[i] = b[cperm[i] - 1];
-    }
+    x.iter_mut()
+        .zip(cperm.iter().map(|cp_i| b[cp_i - 1]))
+        .for_each(|(x_i, b_perm)| *x_i = b_perm);
 
     for j in 0..n {
         let nzst = ucolst[j] - 1;
@@ -255,21 +270,25 @@ pub fn utsolve<S: Scalar>(
         if lu[nzend - 1] == S::zero() {
             return Err(format!("utsolve, zero diagonal element in column j={}", j));
         }
-        x[j] = x[j] / lu[nzend - 1];
-
         let nzend = nzend - 1;
 
+        #[cfg(feature = "debug")]
         for nzptr in nzst..nzend {
             let i = (lurow[nzptr] - 1) as usize;
-            #[cfg(feature = "debug")]
             if lurow[nzptr] <= 0 || i >= j {
                 return Err(format!(
                     "utsolve, illegal row i in column j of U: i={}, j={}, nzptr={}",
                     i, j, nzptr
                 ));
             }
-            x[j] -= lu[nzptr] * x[i];
         }
+
+        lurow[nzst..nzend]
+            .iter()
+            .zip(&lu[nzst..nzend])
+            .for_each(|(i, lu_nzptr)| x[j] -= *lu_nzptr * x[(*i - 1) as usize]);
+
+        x[j] = x[j] / lu[nzend];
     }
 
     Ok(())
