@@ -62,6 +62,13 @@ pub fn lu_solve<S: Scalar>(
     return Ok(());
 }
 
+/// Solve lower triangular system.
+///
+/// This routine takes an LU factorization from lufact (i.e. `P`, `L`, `U` with
+/// `PA = LU`) and solves `Lx = Pb` for `x`. There is nothing clever at all
+/// about sparse right-hand sides here; we always look at every nonzero
+/// of `L`. We do make some checks for consistency of the LU data
+/// structure.
 pub fn lsolve<S: Scalar>(
     n: usize,
     lu: &[S],
@@ -167,6 +174,13 @@ pub fn ltsolve<S: Scalar>(
     Ok(())
 }
 
+/// Solve upper triangular system.
+///
+/// This routine takes an LU factorization from lufact (i.e. `L`, `U`
+/// with `PA = LU`) and solves `Ux = b` for `x`. Note that `P` is not used
+/// and is not a parameter. There is nothing clever at all about
+/// sparse right-hand sides here; we always look at every nonzero of `U`.
+/// We do make some checks for consistency of the LU data structure.
 pub fn usolve<S: Scalar>(
     n: usize,
     lu: &[S],

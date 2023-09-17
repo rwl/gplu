@@ -1,3 +1,26 @@
+//! Implements an algorithm for sparse Gaussian elimination in time
+//! proportional to arithmetic operations.
+//! It does NOT do any preordering for sparsity. We recommend preordering
+//! the columns of the input matrix by using minimum degree on the
+//! symmetric structure of `(A-transpose)A`, i.e. the column intersection
+//! graph of `A`.
+//!
+//! ```bibtex
+//! @article{Gilbert1988,
+//!   doi = {10.1137/0909058},
+//!   url = {https://doi.org/10.1137/0909058},
+//!   year  = {1988},
+//!   month = {sep},
+//!   publisher = {Society for Industrial {\&} Applied Mathematics ({SIAM})},
+//!   volume = {9},
+//!   number = {5},
+//!   pages = {862--874},
+//!   author = {John R. Gilbert and Tim Peierls},
+//!   title = {Sparse Partial Pivoting in Time Proportional to Arithmetic Operations},
+//!   journal = {{SIAM} Journal on Scientific and Statistical Computing}
+//! }
+//! ```
+
 extern crate num_complex;
 extern crate num_traits;
 
@@ -28,12 +51,32 @@ use std::fmt::Display;
 /// LU is a lower-upper numeric factorization.
 #[derive(Debug, Clone)]
 pub struct LU<S: Scalar> {
+    // Index of last nonzero in lu; number of nonzeros in L-I+U.
     lu_size: usize,
+    // Nonzeros in L and U.  Nonzeros in each column are contiguous.
+    // Columns of U and L alternate: u1, l1, u2, l2, ..., un, ln.
+    // Nonzeros are not necessarily in order by row within columns.
+    // The diagonal elements of L, which are all 1, are not stored.
     lu_nz: Vec<S>,
+    // lurow(i) is the row number of the nonzero lu(i).
+    // During the computation, these correspond to row numbers in A,
+    // so we really store the non-triangular PtL and PtU.
+    // At the end we transform them to row numbers in PA, so the
+    // L and U we return are really triangular.
     lu_row_ind: Vec<isize>,
+    // lcolst(j) is the index in lu of the first nonzero in col j of L.
     l_col_ptr: Vec<usize>,
+    // ucolst(j) is the index in lu of the first nonzero in col j of U.
+    // The last nonzero of col j of U is in position lcolst(j)-1, and
+    // the last nonzero of col j of L is in position ucolst(j+1)-1.
+    // ucolst(ncol+1) is one more than the number of nonzeros in L-I+U.
+    //
+    // Notice that ucolst has dimension ncol+1 and lcolst has dimension ncol,
+    // although ucolst(ncol+1)=lcolst(ncol) because the last column of L
+    // contains only the diagonal one, which is not stored.
     u_col_ptr: Vec<usize>,
 
+    // perm(r) = s means that row r of A is in position s in PA.
     row_perm: Vec<usize>,
     col_perm: Vec<usize>,
 
@@ -114,9 +157,10 @@ pub fn factor<I: PrimInt + Display, S: Scalar>(
     // Allocate work arrays.
     let mut rwork = vec![S::zero(); nrow];
     let mut twork = vec![0.0; nrow];
+    // integer vector used to control depth-first search.
     let mut found = vec![0; nrow];
-    let mut child = vec![0; nrow];
-    let mut parent = vec![0; nrow];
+    let mut child = vec![0; nrow]; // also used by ludfs.
+    let mut parent = vec![0; nrow]; // also used by ludfs.
     let mut pattern = vec![0; nrow];
 
     // Create lu structure.

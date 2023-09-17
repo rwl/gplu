@@ -2,6 +2,52 @@ use crate::internal::{dordstat, OFF};
 use crate::rlu::PivotPolicy;
 use crate::Scalar;
 
+/// Copy dense column to sparse structure, pivot, and divide.
+///
+/// Copy column jcol from the dense vector to the sparse data structure,
+/// zeroing out the dense vector. Then find the diagonal element (either
+/// by partial or threshold pivoting or by looking for row number=col
+/// number), move it from `L` into `U`, and divide the column of `L` by it.
+///
+/// # Input variables
+///
+/// ```txt
+///   pivot   = -1 for columns with no diagonal element
+///           = 0 for no pivoting
+///           = 1 for partial (row) pivoting
+///           = 2 for threshold (row) pivoting
+///   pthresh  fraction of max pivot candidate acceptable for pivoting
+///   jcol    Current column number.
+///   ncol    Total number of columns; upper bound on row counts.
+/// ```
+///
+/// # Modified variables
+///
+/// ```txt
+///   lastlu                 Index of last nonzero in lu, updated here.
+///   lu                     On entry, cols 1 through jcol-1 of Pt(L-I+U).
+///                          On exit, cols 1 through jcol.
+///   lurow, lcolst, ucolst  Nonzero structure of columns 1 through jcol
+///                          of PtL and PtU.
+///                          No pivoting has been done, so on entry the
+///                          element that will be U(jcol,jcol) is still
+///                          somewhere in L; on exit, it is the last
+///                          nonzero in column jcol of U.
+///   rperm                  The row permutation P.
+///                          rperm(r) = s > 0 means row r of A is row s of PA.
+///                          rperm(r) = 0 means row r of A has not yet been used
+///                          as a pivot.  On input, perm reflects rows 1 through
+///                          jcol-1 of PA; on output, rows 1 through jcol.
+///   cperm                  The column permutation.
+///   dense                  On entry, column jcol of Pt(U(jcol,jcol)*(L-I)+U).
+///                          On exit, zero.
+/// ```
+///
+/// # Output variable
+///
+/// ```txt
+///   zpivot                 > 0 for success (pivot row), -1 for zero pivot element.
+/// ```
 pub fn lucopy<S: Scalar>(
     pivot: &PivotPolicy,
     pthresh: f64,

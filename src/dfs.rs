@@ -1,6 +1,64 @@
 use crate::internal::OFF;
 use crate::scalar::Scalar;
 
+/// Depth-first search to allocate storage for U.
+///
+/// # Input parameters
+///
+/// ```txt
+///   jcol             current column number.
+///   a, arow, acolst  the matrix A; see lufact for format.
+///   rperm            row permutation P.
+///                    perm(r) = s > 0 means row r of A is row s < jcol of PA.
+///                    perm(r) = 0 means row r of A has not yet been used as a
+///                    pivot and is therefore still below the diagonal.
+///   cperm            column permutation.
+/// ```
+///
+/// # Modified parameters (see below for exit values):
+///
+/// ```txt
+///   lastlu           last used position in lurow array.
+///   lurow, lcolst, ucolst  nonzero structure of Pt(L-I+U);
+///                          see LU for format.
+///   dense            current column as a dense vector.
+///   found            integer array for marking nonzeros in this column of
+///                    Pt(L-I+U) that have been allocated space in lurow.
+///                    Also, marks reached columns in depth-first search.
+///                    found(i)=jcol if i was found in this column.
+///   parent           parent(i) is the parent of vertex i in the dfs,
+///                    or 0 if i is a root of the search.
+///   child            child(i) is the index in lurow of the next unexplored
+///                    child of vertex i.
+///                    Note that parent and child are also indexed according to
+///                    the vertex numbering of A, not PA; thus child(i) is
+///                    the position of a nonzero in column rperm(i),
+///                    not column i.
+/// ```
+///
+/// # On entry
+///
+/// ```txt
+///   found(*)<jcol
+///   dense(*)=0.0
+///   ucolst(jcol)=lastlu+1 is the first free index in lurow.
+/// ```
+///
+/// # On exit
+///
+/// ```txt
+///   found(i)=jcol iff i is a nonzero of column jcol of PtU or
+///     a non-fill nonzero of column jcol of PtL.
+///   dense(*)=column jcol of A.
+///     Note that found and dense are kept according to the row
+///     numbering of A, not PA.
+///   lurow has the rows of the above-diagonal nonzeros of col jcol of U in
+///     reverse topological order, followed by the non-fill nonzeros of col
+///     jcol of L and the diagonal elt of U, in no particular order.
+///     These rows also are numbered according to A, not PA.
+///   lcolst(jcol) is the index of the first nonzero in col j of L.
+///   lastlu is the index of the last non-fill nonzero in col j of L.
+/// ```
 pub fn ludfs<S: Scalar>(
     jcol: usize,
     a: &[S],
