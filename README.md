@@ -1,10 +1,10 @@
-# RLU
+# GPLU
 
-Rust LU Decomposition
+LU Decomposition using Gilbert-Peierls method.
 
 ## About
 
-Crate `rlu` provides sparse LU factorization with partial pivoting as
+Crate `gplu` provides sparse LU factorization with partial pivoting as
 described in "Sparse Partial Pivoting in Time Proportional to Arithmetic
 Operations" by John R. Gilbert and Tim Peierls.
 

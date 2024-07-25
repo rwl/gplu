@@ -1,5 +1,5 @@
 use crate::internal::{dordstat, OFF};
-use crate::rlu::PivotPolicy;
+use crate::gplu::PivotPolicy;
 use crate::Scalar;
 
 /// Copy dense column to sparse structure, pivot, and divide.

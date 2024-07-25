@@ -1,5 +1,3 @@
-extern crate rlu;
-
 const ANSWER: f64 = 1.0;
 
 fn main() {
@@ -10,17 +8,17 @@ fn main() {
     // Set exact solution; then compute right-hand-side vector.
     let x0 = vec![ANSWER; n];
 
-    let opts = rlu::Options {
+    let opts = gplu::Options {
         expand_ratio: 2.0,
 
-        ..rlu::Options::default()
+        ..gplu::Options::default()
     };
 
     let mut b = mat_vec(n, &rowind, &colst, &nz, &x0);
 
-    let lu = rlu::factor(n, &rowind, &colst, &nz, None, &opts).unwrap();
+    let lu = gplu::factor(n, &rowind, &colst, &nz, None, &opts).unwrap();
 
-    rlu::solve(&lu, &mut b, false).unwrap();
+    gplu::solve(&lu, &mut b, false).unwrap();
 
     let resid = residual(&b);
     assert!(resid < 1e-10);

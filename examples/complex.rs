@@ -1,5 +1,3 @@
-extern crate rlu;
-
 use num_complex::Complex32;
 
 /// Factorizes a 10x10 matrix, given a column permutation
@@ -40,11 +38,11 @@ fn main() {
 
     let col_perm = vec![6, 5, 2, 4, 1, 9, 7, 8, 0, 3];
 
-    let opts = rlu::Options::default();
+    let opts = gplu::Options::default();
 
-    let lu = rlu::factor::<i64, Complex32>(n, &arow, &acolst, &a, Some(&col_perm), &opts).unwrap();
+    let lu = gplu::factor::<i64, Complex32>(n, &arow, &acolst, &a, Some(&col_perm), &opts).unwrap();
 
-    rlu::solve(&lu, &mut b, true).unwrap();
+    gplu::solve(&lu, &mut b, true).unwrap();
 
     println!("{:?}", b.iter().map(|v| v.re).collect::<Vec<f32>>());
 }

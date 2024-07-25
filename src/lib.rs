@@ -31,11 +31,11 @@ mod internal;
 mod maxmatch;
 #[cfg(feature = "rayon")]
 mod par;
-mod rlu;
+mod gplu;
 mod scalar;
 mod solve;
 
-pub use crate::rlu::*;
+pub use crate::gplu::*;
 use comp::lucomp;
 use copy::lucopy;
 use dfs::ludfs;

@@ -1,5 +1,3 @@
-extern crate rlu;
-
 /// Factorizes a 10x10 matrix, given a column permutation
 /// vector, and solves for a single right-hand-side.
 fn main() {
@@ -33,14 +31,14 @@ fn main() {
 
     let col_perm = vec![6, 5, 2, 4, 1, 9, 7, 8, 0, 3];
 
-    let opts = rlu::Options::default();
+    let opts = gplu::Options::default();
 
-    let lu = rlu::factor::<i64, f64>(n, &arow, &acolst, &a, Some(&col_perm), &opts).unwrap();
+    let lu = gplu::factor::<i64, f64>(n, &arow, &acolst, &a, Some(&col_perm), &opts).unwrap();
 
     {
         let mut x = [b.clone(), b.clone()].concat();
 
-        rlu::solve(&lu, &mut x, false).unwrap();
+        gplu::solve(&lu, &mut x, false).unwrap();
 
         println!("{:?}", x[..n as usize].to_vec());
         println!("{:?}", x[n as usize..].to_vec());
@@ -48,7 +46,7 @@ fn main() {
     {
         let mut x = [b.clone(), b.clone()].concat();
 
-        rlu::solve(&lu, &mut x, true).unwrap();
+        gplu::solve(&lu, &mut x, true).unwrap();
 
         println!("{:?}", x[..n as usize].to_vec());
         println!("{:?}", x[n as usize..].to_vec());
